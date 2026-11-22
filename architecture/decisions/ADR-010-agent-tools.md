@@ -14,7 +14,7 @@ Agents can get tools through an MCP server, the `gh` CLI, the REST API or tool d
 
 mini-swe-agent's only tool is bash. Its history is one linear list of messages, saved as a trajectory file. It calls models through LiteLLM, so any provider works. It has a step limit, a wall-clock limit and a cost limit in dollars, which stays at zero on free models. It can run commands locally or in a container.
 
-ADR-002 lets the reviewer read and run code but not push. ADR-003 keeps write tokens away from agents. ADR-006 caps tool calls and tokens per stage. The model API key must be present in the process that calls the model, and a bash tool can read environment variables. Bash cannot be limited to certain files, so a testing agent could edit source code to make its own tests pass, which ADR-001 separates it to avoid.
+ADR-002 lets the reviewer read and run code but not push. ADR-003 keeps write tokens away from agents. ADR-006 caps tool calls and tokens per stage. The model API key must be present in the process that calls the model, and a bash tool can read environment variables, including the parent process's through `/proc`. Bash cannot be limited to certain files, so a testing agent could edit source code to make its own tests pass, which ADR-001 separates it to avoid.
 
 ## Decision
 
@@ -32,7 +32,7 @@ We will save each agent's trajectory as a workflow artifact.
 
 We will strip the model API key from the environment of every bash command the agent runs. We will not rely on prompt rules to protect the key.
 
-We will run the reviewer's bash commands in a container, because the reviewer runs the pull request's code. The other agents run in the job's fresh runner.
+We will run every agent's bash commands, and every check that runs repository code, in a sandbox container with no secrets, as the runner's own user. Stripping variables alone is not enough: a process on the runner can read its parent's environment through `/proc`.
 
 ## Consequences
 

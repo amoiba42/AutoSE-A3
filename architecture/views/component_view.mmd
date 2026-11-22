@@ -54,7 +54,7 @@ flowchart TB
     STOP(["STOP: Route posts issue comment<br/>linking the explanation artifact (ADR-006)"])
 
     %% ---------- Tools (ADR-010) ----------
-    TOOLS["All agents: mini-swe-agent · bash only<br/>API key stripped from bash env · no GitHub token<br/>caps: step + wall-clock limit, tokens counted from usage<br/>models: Gemini via AI Studio (free tier, ADR-011)<br/>429: one fallback keeping reviewer + judge splits"]
+    TOOLS["All agents: mini-swe-agent · bash only<br/>bash + repo code run in sandbox container (no secrets, runner uid) · no GitHub token<br/>caps: step + wall-clock limit, tokens counted from usage<br/>models: Gemini via AI Studio (free tier, ADR-011)<br/>429: one fallback keeping reviewer + judge splits"]
     GH["Scripts: gh CLI<br/>event fields via env only<br/>PAT: push + PR · GITHUB_TOKEN: comments, labels, dispatch"]
 
     %% ---------- Flow ----------

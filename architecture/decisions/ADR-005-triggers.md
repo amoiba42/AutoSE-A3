@@ -28,7 +28,7 @@ We will start the workflow on three events:
 
 We will accept `/autose` only on issues.
 
-We will run at most one run per issue, with `concurrency: group: autose-${{ github.event.issue.number || inputs.issue }}` and `cancel-in-progress: false`. A second trigger for the same issue waits in the queue and then resumes from the last stage that passed. Runs for different issues run in parallel.
+We will run at most one run per issue, with `concurrency: group: autose-${{ github.event.issue.number || inputs.issue }}` and `cancel-in-progress: false`. Events that will not start a run (other labels, ordinary or unauthorised comments) get their own one-off concurrency group, so they can never replace a queued run. A second trigger for the same issue waits in the queue and then resumes from the last stage that passed. Runs for different issues run in parallel.
 
 ## Consequences
 

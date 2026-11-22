@@ -5,7 +5,7 @@ What each agent receives, what it must produce, and who uses each output. Derive
 ## 1. Shared rules for every agent
 
 - **Issue input:** the issue title and body **snapshot** stored in `state.json` on the first run (ADR-004), wrapped in a random per-run delimiter as untrusted data (ADR-006). Never the live issue, never the comment thread.
-- **Tool:** bash only, through mini-swe-agent (ADR-010). The model API key is stripped from every bash command's environment.
+- **Tool:** bash only, through mini-swe-agent (ADR-010). Every command runs in the sandbox container, which holds no secrets and cannot see the runner's processes.
 - **No GitHub token:** jobs that run agents check out with `persist-credentials: false`, so no token is left in `.git/config`. All GitHub actions are done by scripts (ADR-003, ADR-010).
 - **Attempt summary:** every agent ends with `attempt_summary.md`: what it did and why, at most about 200 words. It is used only in a send-back note for the same stage (ADR-004).
 - **Schema errors:** an output that fails its schema gets one re-ask to the same agent, counted against its caps (ADR-006).
@@ -70,7 +70,7 @@ Used by: G2 (`targets[].file`, `symbol`, `status`), the G3 scope guard (`targets
 | | Phase 1 | Phase 2 |
 |---|---|---|
 | Receives | issue title + body; `acceptance_criteria` from `spec.json`; the interface list; a scratch copy of the clean commit | its phase 1 tests; a scratch copy with the implementation |
-| May change | new test files under `tests/` | imports, fixtures and paths in its own tests; never an `assert` line |
+| May change | new test files under `tests/` | imports, fixtures and paths in its own phase 1 files; never an `assert` line; no new files |
 | Never receives | `approach` from `design.json`, the implementer's code (phase 1), trajectory, attempt summary | the implementer's trajectory and attempt summary |
 
 Must output: test files whose test functions are named `test_ac<n>_<what>` (one or more per AC), each calling at least one interface symbol and containing a non-trivial `assert`, and `attempt_summary.md`. Only test files under `tests/` are kept, never `conftest.py`; anything else is discarded and logged (ADR-010). The tests are stored as an artifact and applied only for G4, so a Stage 3 retry never sees them (ADR-012). `test_report.md` is written by a script from the `pytest` JUnit XML and `baseline.json`, not by the agent.

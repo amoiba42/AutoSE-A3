@@ -26,7 +26,7 @@ We will mirror `state.json` in one comment on the issue, updated in place, for h
 
 We will use one branch per issue, `autose/issue-<n>`, and reuse an existing branch or pull request.
 
-We will store a snapshot of the issue title, body and `updated_at` in `state.json` on the first run. Every later run uses the snapshot. If the issue has been edited since, the run stops and asks a maintainer to start it again.
+We will store a snapshot of the issue title and body, with a hash of both, in `state.json` on the first run. Every later run uses the snapshot. If the hash no longer matches, the run stops; a maintainer re-adding the `autose` label restarts from Stage 1 with a new snapshot. The issue's `updated_at` is not used, because every comment changes it.
 
 A new run starts from the target stage if `state.json` holds one; otherwise it resumes from the last stage that passed. Earlier stage outputs are downloaded, not regenerated.
 
