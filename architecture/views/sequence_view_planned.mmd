@@ -52,7 +52,7 @@ sequenceDiagram
     CI-->>R: green (polled ≤ 10 min)
 
     R->>RV: needs: release
-    RV->>RV: run tests (no secrets in env)
+    RV->>RV: run tests (sandbox container, no secrets)
     RV->>RV: reviewer agent in container: issue snapshot, diff, repo at PR HEAD (untrusted), test results
     RV->>RV: G6 evidence check on review.json
     RV->>GH: PR comment review.md + label

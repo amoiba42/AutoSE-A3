@@ -100,7 +100,7 @@ Used by: G4 (test names map to AC ids; assertions compared across phases), Relea
 - `verdict` is `approve` or `changes_requested`. `classification` is one of `spec`, `design`, `code`, `test`.
 - `drift_reference` may point only at the issue, a `file:line`, or a section of `ARCHITECTURE.md` (ADR-004).
 
-Used by: G6 (every `file:line` must exist at PR HEAD; every `command` must appear in the reviewer's own trajectory; an `approve` must include the reviewer's test command and is invalid if the job's test step failed beyond `baseline.json`), Route (`verdict`, `classification`), the send-back note (`findings` copied verbatim).
+Used by: G6 (every `file:line` must exist at PR HEAD; every `command` must appear in the reviewer's own run log; an `approve` must include the reviewer's test command and is invalid if the job's test step failed beyond `baseline.json`), Route (`verdict`, `classification`), the send-back note (`findings` copied verbatim).
 
 ## 3. Script outputs
 

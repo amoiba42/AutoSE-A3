@@ -26,7 +26,7 @@ We will not give the reviewer `pr.md`. As a backstop, we will keep `pr.md` minim
 
 We will use a different model for the reviewer from the agents that write code.
 
-We will have the reviewer job run the tests itself, in a step with no secrets in its environment.
+We will have the reviewer job run the tests itself, in the sandbox container with no secrets.
 
 We will treat the diff and the repository as untrusted input in the reviewer's prompt, because the code under review can contain text aimed at the reviewer.
 

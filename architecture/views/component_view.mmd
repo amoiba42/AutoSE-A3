@@ -19,9 +19,9 @@ flowchart TB
         G1{{"G1 spec.json structure check<br/>+ LLM testability judge (gemini-3.8-flash)"}}
         S23["S2+S3 Design + implementation agent<br/>gemini-3.8-flash · ARCHITECTURE.md<br/>one conversation, paused for G2"]
         G2{{"G2 ≤ 10 targets · EXISTING / NEW<br/>ast + path check"}}
-        G3{{"G3 install + import · ruff<br/>scope guard (no .github/, config, lockfiles,<br/>conftest.py, ARCHITECTURE.md) · no secrets"}}
+        G3{{"G3 install + import in sandbox · ruff (no new problems)<br/>scope guard (no .github/, config, lockfiles,<br/>conftest.py, ARCHITECTURE.md) · no secrets"}}
         S4["S4 Testing agent (gemini-3.6-flash)<br/>phase 1: clean-commit copy + interface list<br/>(no design.md reasoning)<br/>phase 2: copy with implementation<br/>only test files copied back<br/>tests stored as artifact, hidden from S3 retries"]
-        G4{{"G4 passing test IDs ⊇ baseline · re-run failures once<br/>AC tests call a target, real asserts<br/>existing tests + phase-2 asserts unchanged<br/>no conftest.py · no secrets"}}
+        G4{{"G4 passing test IDs ⊇ baseline · re-run failures once<br/>test files vs base commit · AC tests call a target, real asserts<br/>existing tests + phase-2 asserts unchanged<br/>no conftest.py · no secrets"}}
         S1 --> G1 --> S23
         S23 -->|design.json| G2 -->|pass, continue conversation| S23
         S23 -->|diff.patch| G3 --> S4 --> G4
@@ -39,7 +39,7 @@ flowchart TB
 
     %% ---------- Job 3: Review (ADR-002) ----------
     subgraph J3["Job 3 · Review · contents: read, pull-requests: write, no actions: read"]
-        TST["Run tests<br/>(step with no secrets)"]
+        TST["Run tests<br/>(sandbox container, no secrets)"]
         S6["S6 Reviewer agent<br/>gemini-4-hydrogen · skeptical prompt<br/>input: issue snapshot, diff, repo at PR HEAD (untrusted)<br/>no pr.md · bash in container"]
         G6{{"G6 evidence check on review.json<br/>file:line exists or command was run<br/>approve needs own test run, no new failures"}}
         TST --> S6 --> G6
