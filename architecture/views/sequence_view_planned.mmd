@@ -1,0 +1,72 @@
+%% PLANNED sequence view, written from the ADRs before any real run.
+%% The assignment needs a sequence view of ONE REAL RUN. Replace this file with
+%% sequence_view.mmd once a real run exists, using its real run IDs, PR number and timings.
+sequenceDiagram
+    autonumber
+    actor M as Maintainer
+    participant GH as GitHub (issue / PR)
+    participant O as Job 1 Orchestrator
+    participant RA as Requirements agent<br/>gemini-3.5-flash-lite
+    participant J as Testability judge<br/>gemini-3.8-flash
+    participant DI as Design + impl agent<br/>gemini-3.8-flash
+    participant TA as Testing agent<br/>gemini-3.6-flash
+    participant A as Artifacts (state.json, outputs)
+    participant R as Job 2 Release (script)
+    participant CI as ci.yml
+    participant RV as Job 3 Review<br/>reviewer gemini-4-hydrogen
+    participant RT as Job 4 Route (script)
+
+    M->>GH: add label "autose" to issue #n
+    GH->>O: issues: labeled (concurrency group autose-n)
+    O->>A: download latest autose-issue-n (if any), else new state.json + baseline.json + issue snapshot
+    O->>O: done flag set? → comment and exit · issue edited since snapshot? → stop
+    O->>O: start at target stage if set, else last passed stage
+    O->>GH: issue mirror comment: stage 1
+
+    O->>RA: issue snapshot (random delimiter, untrusted), A1 skill, repo
+    RA-->>O: spec.json, attempt_summary.md
+    O->>O: G1 schema check
+    O->>J: acceptance_criteria only
+    J-->>O: judge.json (all testable)
+    O->>GH: post assumptions comment (only if vague)
+
+    O->>DI: issue snapshot, spec.json, ARCHITECTURE.md, repo
+    DI-->>O: design.json
+    O->>O: G2 EXISTING / NEW check
+    O->>DI: continue same conversation: implement
+    DI-->>O: working-tree changes, attempt_summary.md
+    O->>O: git diff → diff.patch, G3 install/import, ruff, scope guard
+
+    O->>TA: phase 1: issue, ACs, interface list, clean-commit copy
+    TA-->>O: tests/test_ac<n>_*
+    O->>TA: phase 2: own tests in copy with implementation
+    TA-->>O: setup fixes only, attempt_summary.md
+    O->>O: G4 pytest vs baseline.json, AC coverage, asserts unchanged → test_report.md
+    O->>A: upload artifacts + state.json (last passed: 4)
+
+    O->>R: needs: orchestrator
+    R->>R: regex secret scan on diff
+    R->>R: branch has foreign commits? → stop (never force-push)
+    R->>GH: push autose/issue-n (PAT), open PR with minimal pr.md
+    GH->>CI: PR / push event
+    CI-->>R: green (polled ≤ 10 min)
+
+    R->>RV: needs: release
+    RV->>RV: run tests (no secrets in env)
+    RV->>RV: reviewer agent in container: issue snapshot, diff, repo at PR HEAD (untrusted), test results
+    RV->>RV: G6 evidence check on review.json
+    RV->>GH: PR comment review.md + label
+
+    RV->>RT: needs: review (if: always())
+    RT->>A: read state.json (round)
+    alt approved, or 2 rounds used
+        RT->>A: mark state.json done
+        RT->>GH: issue comment: ready for human decision
+        M->>GH: merge or close (human)
+    else changes requested (round < 2)
+        RT->>A: write target stage (earliest classification), round + 1
+        RT->>GH: workflow_dispatch(issue = n)
+        Note over GH,O: new run starts at the target stage on the same branch and PR
+    else any job failed, timed out or cancelled
+        RT->>GH: stop comment linking the explanation artifact
+    end
