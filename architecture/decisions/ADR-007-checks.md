@@ -16,11 +16,11 @@ Agents can change files outside the plan, including workflow files, configuratio
 
 ## Decision
 
-We will decide every check with a script and its exit code, except two LLM verdicts: the Stage 1 testability judgment, logged as an LLM verdict, and the Stage 6 review verdict.
+We will decide every check with a script and its exit code, except three LLM verdicts, each logged as an LLM verdict: the Stage 1 rejection of a very vague issue, the Stage 1 testability judgment, and the Stage 6 review verdict.
 
 | Stage | Check | Decided by |
 |---|---|---|
-| 1 | `spec.json` passes a structure check, and an LLM judges each acceptance criterion testable | script + LLM |
+| 1 | the issue is not rejected as too vague; `spec.json` passes a structure check, and an LLM judges each acceptance criterion testable | script + LLM |
 | 2 | at most 10 design targets; every design target is marked `EXISTING` or `NEW`; an `ast` check confirms each `EXISTING` file and function, and a path check confirms the parent module of each `NEW` one | script |
 | 3 | the package installs and imports inside the sandbox container, which has no secrets and runs as the runner's user, `ruff` reports no problem that was not already in the file at the base commit, and the diff touches only files named in the design plus tests, never `.github/`, configuration, lockfiles, `conftest.py` or `ARCHITECTURE.md` | script |
 | 4 | the set of passing test IDs includes every test that passes in `baseline.json`; failed tests are re-run once before the check fails; existing test files are compared with their versions at the base commit; every acceptance criterion has at least one passing test marked `AC-n` that calls a design target and has a non-trivial `assert`; existing tests are unchanged (hash check); no `conftest.py` is added or changed | script |
@@ -33,7 +33,7 @@ We will record `baseline.json` by running the test suite on the clean commit, in
 
 We will treat a review verdict without valid evidence as invalid, and the run stops.
 
-When the issue is vague, the requirements agent will proceed with assumptions. It records each assumption in `spec.json`, and the assumptions are posted as an issue comment for humans.
+When the issue is very vague, so that no testable behaviour can be stated without inventing the core goal, the requirements agent will reject it. The run stops, and the reason and the questions for the author are posted as an issue comment. Otherwise the agent proceeds with assumptions, records each one in `spec.json`, and the assumptions are posted as an issue comment for humans.
 
 ## Consequences
 

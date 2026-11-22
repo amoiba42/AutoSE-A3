@@ -15,7 +15,7 @@ flowchart TB
     %% ---------- Job 1: Orchestrator (ADR-003) ----------
     subgraph J1["Job 1 · Orchestrator (Python state machine)"]
         direction TB
-        S1["S1 Requirements agent<br/>gemini-3.5-flash-lite · A1 skill<br/>vague issue: assumptions in spec.json"]
+        S1["S1 Requirements agent<br/>gemini-3.5-flash-lite · A1 skill<br/>vague: assumptions in spec.json<br/>very vague: rejected.json, stop"]
         G1{{"G1 spec.json structure check<br/>+ LLM testability judge (gemini-3.8-flash)"}}
         S23["S2+S3 Design + implementation agent<br/>gemini-3.8-flash · ARCHITECTURE.md<br/>one conversation, paused for G2"]
         G2{{"G2 ≤ 10 targets · EXISTING / NEW<br/>ast + path check"}}
@@ -73,6 +73,7 @@ flowchart TB
     G1 & G2 & SEC & G5 & G6 -->|fail: explanation artifact| J4
     G3 & G4 -->|retries used up| J4
     J1 -->|token / time / tool-call cap reached| J4
+    S1 -->|very vague: rejected.json| J4
     RT -->|check failed, retries used up, cap reached,<br/>or job crashed, timed out or cancelled| STOP
 
     TOOLS -.-> S1 & S23 & S4 & S6

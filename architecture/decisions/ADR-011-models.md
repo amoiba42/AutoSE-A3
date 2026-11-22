@@ -19,6 +19,10 @@ The project uses free model tiers only. Over 30 to 50 runs, the coding agents ne
 
 Models of the same family share blind spots, so a single-family setup weakens one of the reviewer's safeguards.
 
+Assumptions:
+- Each baseline Gemini model is on the AI Studio free tier with no billing account linked. Checked in AI Studio before the first run; if one is not, it is replaced and this ADR is updated.
+- The OpenRouter Qwen model ID for variant B is pinned in `config.py` before experiment 1 starts.
+
 ## Decision
 
 We will use Gemini for every role in the baseline, with a different model per role.
@@ -39,7 +43,6 @@ We will use free tiers only, with no billing account linked to any provider.
 
 On a rate-limit error, we will fall back once to another free Gemini model that keeps both splits above. If the fallback is also limited, the stage stops under ADR-006.
 
-TODO(me): Confirm in AI Studio that each baseline model, including `gemini-3.6-flash`, is on the free tier, and pin the exact OpenRouter Qwen model ID for the variant.
 
 ## Consequences
 

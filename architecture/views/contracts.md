@@ -18,7 +18,7 @@ What each agent receives, what it must produce, and who uses each output. Derive
 | | |
 |---|---|
 | Receives | issue title + body; A1 skill as the system prompt; the repository at the clean commit (read only). On a send-back: the send-back note. |
-| Must output | `spec.json` (schema below) and `attempt_summary.md` |
+| Must output | `spec.json` (schema below) and `attempt_summary.md`; or, only for a very vague issue, `rejected.json` (`{"reason", "questions"}`) instead of `spec.json`, which stops the run |
 | Never receives | design, code, tests, review, other agents' summaries |
 
 ```json

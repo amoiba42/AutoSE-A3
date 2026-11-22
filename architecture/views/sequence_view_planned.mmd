@@ -24,7 +24,7 @@ sequenceDiagram
     O->>GH: issue mirror comment: stage 1
 
     O->>RA: issue snapshot (random delimiter, untrusted), A1 skill, repo
-    RA-->>O: spec.json, attempt_summary.md
+    RA-->>O: spec.json, attempt_summary.md (or rejected.json if very vague: run stops, Route comments reason + questions)
     O->>O: G1 schema check
     O->>J: acceptance_criteria only
     J-->>O: judge.json (all testable)
