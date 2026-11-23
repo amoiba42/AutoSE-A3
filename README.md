@@ -55,7 +55,9 @@ Follow a run through the issue's "AutoSE status" comment, the run's artifact `au
 | [`experiment/variants.md`](experiment/variants.md) | What each decision-experiment variant changes |
 | [`results/results.csv`](results/results.csv) | Results per issue |
 | [`results/experiments.csv`](results/experiments.csv) | Results per experiment run |
-| [`results/runs.md`](results/runs.md) | Links to every Actions run, PR and review |
+| [`results/runs.md`](results/runs.md) | The runs, PRs and reviews behind each result |
+| [`results/old_runs.md`](results/old_runs.md) | Every other run (stopped, superseded or cancelled), with what it showed and the change it led to |
+| [`results/README.md`](results/README.md) | Column meanings and the counts behind the report |
 | [`updated_files/ARCHITECTURE.md`](updated_files/ARCHITECTURE.md) | Architecture file from A2 |
 | [`updated_files/skills.md`](updated_files/skills.md) | A1 requirements skill, adapted for the workflow |
 
