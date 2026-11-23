@@ -44,7 +44,7 @@ Follow a run through the issue's "AutoSE status" comment, the run's artifact `au
 |---|---|
 | [`README.md`](README.md) | Fork URL and commit, models, and how to trigger the workflow |
 | [`report.pdf`](report.pdf) | Project report |
-| `demo.mp4` | Demo video, or a link in this README (to add) |
+| [Demo video](https://drive.google.com/file/d/1uA1hGW-WAIlYc8k99CToYw53FZJv8Wko/view?usp=sharing) | AutoSE demo video |
 | [`architecture/views/`](architecture/views/) | [Component view](architecture/views/component_view.mmd), [sequence view](architecture/views/sequence_view.mmd), [stage map](architecture/views/stage_map.md), [agent contracts](architecture/views/contracts.md) |
 | [`architecture/decisions/`](architecture/decisions/) | One ADR per decision, superseded ones kept; [index](architecture/decisions/README.md) |
 | [`img/`](img/) | Rendered [component view](img/component_view.png) and [sequence view](img/sequence_view.png) |
