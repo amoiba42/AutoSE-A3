@@ -1,0 +1,48 @@
+diff --git a/markdown/inlinepatterns.py b/markdown/inlinepatterns.py
+index 1b72603..e0c7200 100644
+--- a/markdown/inlinepatterns.py
++++ b/markdown/inlinepatterns.py
+@@ -86,6 +86,7 @@ def build_inlinepatterns(md: Markdown, **kwargs: Any) -> util.Registry[InlinePro
+     inlinePatterns.register(
+         ShortImageReferenceInlineProcessor(IMAGE_REFERENCE_RE, md), 'short_image_ref', 125
+     )
++    inlinePatterns.register(AutolinkInlineProcessor(OPAQUE_LINK_RE, md), 'opaquelink', 125)
+     inlinePatterns.register(AutolinkInlineProcessor(AUTOLINK_RE, md), 'autolink', 120)
+     inlinePatterns.register(AutomailInlineProcessor(AUTOMAIL_RE, md), 'automail', 110)
+     inlinePatterns.register(SubstituteTagInlineProcessor(LINE_BREAK_RE, 'br'), 'linebreak', 100)
+@@ -126,6 +127,9 @@ AUTOLINK_RE = r'<([A-Za-z][A-Za-z0-9+.-]*://[^<>]*)>'
+ AUTOMAIL_RE = r'<([^<> !]+@[^@<> ]+)>'
+ """ Match an automatic email link (`<me@example.com>`). """
+ 
++OPAQUE_LINK_RE = r'<((?:tel|sms|callto|facetime|skype):[^<> ]+)>'
++""" Match a link with a scheme that has no `//` (`<tel:+123>`). """
++
+ HTML_RE = (
+     # Tag
+     r'''(<(\/?+[a-zA-Z][^\s"'<>@]*+(?:\s+[^\s"'=<>]++(?:\s*+=\s*+(?:"[^"]*+"|'[^']*+'|[^\s"'=<>]++))?+)*+\s*+/?|'''
+diff --git a/tests/test_scheme_autolinks.py b/tests/test_scheme_autolinks.py
+new file mode 100644
+index 0000000..74dbd50
+--- /dev/null
++++ b/tests/test_scheme_autolinks.py
+@@ -0,0 +1,20 @@
++import unittest
++
++import markdown
++
++
++class TestSchemeAutolinks(unittest.TestCase):
++    def test_tel_in_list(self):
++        self.assertEqual(markdown.markdown("- <tel:+123>"),
++                         '<ul>\n<li><a href="tel:+123">tel:+123</a></li>\n</ul>')
++
++    def test_tel_in_emphasis(self):
++        self.assertEqual(markdown.markdown("*call <tel:+123>*"),
++                         '<p><em>call <a href="tel:+123">tel:+123</a></em></p>')
++
++    def test_code_span_unchanged(self):
++        self.assertEqual(markdown.markdown("`<tel:+123>`"), "<p><code>&lt;tel:+123&gt;</code></p>")
++
++    def test_skype_with_at_sign_is_not_mail(self):
++        self.assertEqual(markdown.markdown("<skype:user@example.com>"),
++                         '<p><a href="skype:user@example.com">skype:user@example.com</a></p>')
