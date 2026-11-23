@@ -46,8 +46,8 @@ Follow a run through the issue's "AutoSE status" comment, the run's artifact `au
 | [`report.pdf`](report.pdf) | Project report |
 | `demo.mp4` | Demo video, or a link in this README (to add) |
 | [`architecture/views/`](architecture/views/) | [Component view](architecture/views/component_view.mmd), [sequence view](architecture/views/sequence_view.mmd), [stage map](architecture/views/stage_map.md), [agent contracts](architecture/views/contracts.md) |
-| [`img/`](img/) | Rendered [component view](img/component_view.png) and [sequence view](img/sequence_view.png) |
 | [`architecture/decisions/`](architecture/decisions/) | One ADR per decision, superseded ones kept; [index](architecture/decisions/README.md) |
+| [`img/`](img/) | Rendered [component view](img/component_view.png) and [sequence view](img/sequence_view.png) |
 | [`workflow/`](workflow/) | Copy of [`.github/workflows/`](workflow/.github/workflows/), all [agent code](workflow/.github/autose/) and [prompts](workflow/.github/autose/prompts/) |
 | [`experiment/issues/`](experiment/issues/) | The 5 issue texts |
 | [`experiment/hidden_tests/`](experiment/hidden_tests/) | Hidden tests |
