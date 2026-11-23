@@ -6,7 +6,7 @@ Date: 2026-11-22
 
 ## Status
 
-Proposed
+Accepted
 
 ## Context
 
@@ -18,4 +18,6 @@ We will not use SonarQube. It is disproportionate to the size of the target repo
 
 ## Consequences
 
-**Positive.** Skipping SonarQube means less setup and faster runs. The missing platform-level analysis is acceptable at the scale of this repo.
+**Positive.** Skipping SonarQube means less setup and faster runs.
+
+**Negative.** There is no platform-level analysis of code smells, coverage or security hotspots, which we accept at the scale of this repo.

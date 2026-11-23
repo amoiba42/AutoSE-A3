@@ -1,4 +1,4 @@
-# 10. mini-swe-agent with bash as the only agent tool
+# 10. Bash-only mini-swe-agent
 
 Covers: D5
 
@@ -6,7 +6,7 @@ Date: 2026-11-22
 
 ## Status
 
-Proposed
+Accepted. Amended by ADR-018 (output directory emptied per stage; tester workspaces made unreadable) and ADR-023 (command output cap).
 
 ## Context
 
@@ -22,7 +22,7 @@ We will build all four agents on mini-swe-agent.
 
 Each agent's only tool is bash, in a checkout of the fork. No agent gets an MCP server, or a `gh` CLI or REST API with a token. Jobs that run agents check out the repository with `persist-credentials: false`, so no token is left in `.git/config`.
 
-Script steps outside the agents do all GitHub actions with the `gh` CLI: pushing, opening the pull request, posting comments and labels, and starting runs.
+Script steps outside the agents do all GitHub actions with git and the GitHub API: pushing, opening the pull request, posting comments and labels, and starting runs.
 
 We will enforce ADR-006's tool-call and wall-clock caps through mini-swe-agent's step limit and wall-clock limit. The orchestrator will enforce the token caps by counting tokens from the `usage` field of each model response.
 

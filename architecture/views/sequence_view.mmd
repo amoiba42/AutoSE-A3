@@ -1,0 +1,71 @@
+sequenceDiagram
+    autonumber
+    actor M as Maintainer
+    participant GH as GitHub
+    participant O as Orchestrator job
+    participant RA as Requirements agent
+    participant J as Testability judge
+    participant DI as Design + implementation agent
+    participant TA as Testing agent
+    participant S as Run state store
+    participant R as Release job
+    participant CI as CI
+    participant RV as Review job
+    participant RT as Route job
+
+    M->>GH: label issue autose
+    GH->>O: issue labeled
+    O->>S: load run state (or create it with issue snapshot and test baseline)
+    O->>O: choose start stage: restart stage, target stage, or last passed stage
+
+    O->>RA: issue snapshot (untrusted), A1 skill, repo
+    RA-->>O: spec with acceptance criteria and assumptions
+    O->>O: G1 spec schema
+    O->>J: acceptance criteria only
+    J-->>O: testability verdict per criterion
+    opt issue was vague
+        O->>GH: comment listing assumptions
+    end
+
+    O->>DI: issue snapshot, spec, repo architecture guide, repo
+    DI-->>O: design targets
+    O->>O: G2 target check
+    O->>DI: implement (same conversation)
+    DI-->>O: code changes
+    O->>O: G3 install, lint, scope
+
+    O->>TA: phase 1: criteria, interface list, clean copy
+    TA-->>O: acceptance tests
+    O->>TA: phase 2: same tests on copy with implementation
+    TA-->>O: setup fixes only
+    O->>O: G4 tests vs baseline, criteria coverage
+    Note over O,TA: G1, G2 fail: one re-ask. G3 fail: S3 max 2. G4 code fault: S3 max 2, then S2 once. G4 test fault: S4 once.
+    O->>S: save stage outputs, last passed stage 4
+
+    O->>R: start
+    R->>R: secret scan, merge base branch
+    R->>GH: push branch, open PR
+    GH->>CI: run CI
+    CI-->>R: green within 10 min
+    R->>RV: start, with merge base
+
+    RV->>RV: run tests in sandbox on PR commit only
+    RV->>RV: reviewer agent: issue snapshot, PR diff, repo at PR head
+    RV->>RV: G6 evidence check (fail: one re-ask)
+    RV->>GH: review comment + label
+
+    RV->>RT: start (always)
+    RT->>S: read review round
+    alt approved, or 2 rounds used
+        RT->>S: mark done
+        RT->>GH: comment: ready for human decision
+        M->>GH: merge or close
+    else changes requested, round < 2
+        RT->>S: target stage = earliest classification, round + 1
+        RT->>GH: dispatch new run
+        Note over GH,O: new run resumes at target stage on same branch and PR
+    else any job failed, timed out or cancelled
+        RT->>S: record stopped job
+        RT->>GH: update the one stop comment (redacted) with explanation
+        Note over GH,O: re-trigger resumes at S4 after Release stop, re-releases for a new review after Review stop
+    end

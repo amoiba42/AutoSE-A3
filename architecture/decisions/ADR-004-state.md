@@ -1,4 +1,4 @@
-# 4. Workflow artifacts as the source of truth for state
+# 4. Artifact-based state
 
 Covers: D4
 
@@ -6,7 +6,7 @@ Date: 2026-11-22
 
 ## Status
 
-Proposed
+Accepted. Amended by ADR-022 (where a re-run resumes after a Release or Review stop) and ADR-024 (a restart resets the stages it repeats).
 
 ## Context
 
@@ -26,7 +26,7 @@ We will mirror `state.json` in one comment on the issue, updated in place, for h
 
 We will use one branch per issue, `autose/issue-<n>`, and reuse an existing branch or pull request.
 
-We will store a snapshot of the issue title and body, with a hash of both, in `state.json` on the first run. Every later run uses the snapshot. If the hash no longer matches, the run stops; a maintainer re-adding the `autose` label restarts from Stage 1 with a new snapshot. The issue's `updated_at` is not used, because every comment changes it.
+We will store a snapshot of the issue title and body, with a hash of both, in `state.json` on the first run. Every later run uses the snapshot. If the hash no longer matches, a run started by a comment or a dispatch stops, and a run started by a maintainer re-adding the `autose` label restarts from Stage 1 with a new snapshot. While the hash matches, re-adding the label resumes as below. The issue's `updated_at` is not used, because every comment changes it.
 
 A new run starts from the target stage if `state.json` holds one; otherwise it resumes from the last stage that passed. Earlier stage outputs are downloaded, not regenerated.
 
@@ -42,4 +42,4 @@ The orchestrator will assemble the send-back note without writing prose. It copi
 
 **Positive.** Resuming from the last stage that passed saves tokens and time.
 
-**Neutral.** Artifacts expire after 90 days by default, which does not matter for this study. The send-back note is only as good as the agent's own attempt summary, which also tests the model's capability.
+**Neutral.** Artifacts expire after 90 days by default, which does not matter for this study. The send-back note is only as good as the agent's own attempt summary, so a weak model writes a weak note.

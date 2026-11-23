@@ -1,80 +1,81 @@
-%% Component view: agents, tools, jobs and how they call each other.
-%% Source of truth: architecture/decisions/ADR-001 .. ADR-012.
+%% Component view: agents, checks, jobs and how they connect.
+%% Solid arrow = control or data flow. Dashed arrow = uses / reads / writes.
 flowchart TB
-    %% ---------- Triggers (ADR-005) ----------
-    subgraph TRIG["Triggers (ADR-005) · concurrency: one run per issue"]
-        T1["issues: labeled<br/>label = autose"]
-        T2["issue_comment: created<br/>/autose on an issue<br/>OWNER / MEMBER / COLLABORATOR, not Bot"]
-        T3["workflow_dispatch<br/>input: issue<br/>(target stage read from state.json)"]
+    subgraph TRIG["Triggers · one run per issue at a time"]
+        T1["Issue labeled autose"]
+        T2["/autose comment<br/>owner, member or collaborator, not a bot"]
+        T3["Manual or Route dispatch<br/>issue, optional restart stage 1-4"]
     end
 
-    %% ---------- State (ADR-004) ----------
-    STATE[("Workflow artifacts autose-issue-n<br/>state.json (issue snapshot, target stage, done flag)<br/>stage outputs · attempt summaries · trajectories<br/>(source of truth)")]
-    MIRROR["Issue comment mirror<br/>(humans only, not read by workflow)"]
+    STATE[("Run state store<br/>issue snapshot, target stage, done flag,<br/>stage outputs, attempt summaries, trajectories")]
+    MIRROR["Issue mirror comment<br/>for humans, never read back"]
 
-    %% ---------- Job 1: Orchestrator (ADR-003) ----------
-    subgraph J1["Job 1 · Orchestrator (Python state machine)"]
+    subgraph J1["Orchestrator job · state machine"]
         direction TB
-        S1["S1 Requirements agent<br/>gemini-3.5-flash-lite · A1 skill<br/>vague: assumptions in spec.json<br/>very vague: rejected.json, stop"]
-        G1{{"G1 spec.json structure check<br/>+ LLM testability judge (gemini-3.8-flash)"}}
-        S23["S2+S3 Design + implementation agent<br/>gemini-3.8-flash · ARCHITECTURE.md<br/>one conversation, paused for G2"]
-        G2{{"G2 ≤ 10 targets · EXISTING / NEW<br/>ast + path check"}}
-        G3{{"G3 install + import in sandbox · ruff (no new problems)<br/>scope guard (no .github/, config, lockfiles,<br/>conftest.py, ARCHITECTURE.md) · no secrets"}}
-        S4["S4 Testing agent (gemini-3.6-flash)<br/>phase 1: clean-commit copy + interface list<br/>(no design.md reasoning)<br/>phase 2: copy with implementation<br/>only test files copied back<br/>tests stored as artifact, hidden from S3 retries"]
-        G4{{"G4 passing test IDs ⊇ baseline · re-run failures once<br/>test files vs base commit · AC tests call a target, real asserts<br/>existing tests + phase-2 asserts unchanged<br/>no conftest.py · no secrets"}}
+        S1["S1 Requirements agent<br/>adapted A1 skill<br/>vague: states assumptions<br/>very vague: rejects with questions"]
+        G1{{"G1 spec schema<br/>+ LLM testability judge<br/>judge model differs from S1 model"}}
+        S23["S2+S3 Design + implementation agent<br/>one conversation, paused for G2"]
+        G2{{"G2 at most 10 targets<br/>existing symbol found and kind matches,<br/>or new symbol in an existing module"}}
+        G3{{"G3 install + import · lint, no new problems<br/>changes stay inside design targets<br/>no workflow, config or lockfile edits<br/>existing tests unedited · no secrets"}}
+        S4["S4 Testing agent<br/>phase 1: clean copy + interface list,<br/>no design reasoning, implementation hidden<br/>phase 2: copy with implementation, setup fixes only"]
+        G4{{"G4 no new failures vs baseline<br/>every acceptance criterion has a passing test<br/>that calls a target and asserts<br/>existing tests and phase-1 asserts unchanged"}}
         S1 --> G1 --> S23
-        S23 -->|design.json| G2 -->|pass, continue conversation| S23
-        S23 -->|diff.patch| G3 --> S4 --> G4
-        G3 -->|fail, max 2| S23
-        G4 -->|fail: S3 max 2, then S2 once| S23
+        S23 -->|design| G2 -->|pass| S23
+        S23 -->|diff| G3 --> S4 --> G4
+        G1 -.->|fail: one re-ask| S1
+        G2 -.->|fail: one re-ask| S23
+        G3 -->|fail: S3 max 2| S23
+        G4 -->|code fault: S3 max 2, then S2 once| S23
+        G4 -->|test fault: S4 once| S4
     end
 
-    %% ---------- Job 2: Release ----------
-    subgraph J2["Job 2 · Release (script, no agent)"]
-        SEC{{"Regex secret scan on diff<br/>(ADR-006, ADR-008)"}}
-        S5["S5 push branch autose/issue-n (never force)<br/>open PR with minimal pr.md<br/>fine-grained PAT: contents + PRs, no workflows"]
-        G5{{"G5 PR open + ci.yml green<br/>poll 10 min"}}
+    subgraph J2["Release job · script only"]
+        SEC{{"Secret scan on diff"}}
+        S5["S5 merge base branch, push (never force)<br/>open PR with minimal description"]
+        G5{{"G5 PR open + CI green<br/>within 10 min"}}
         SEC --> S5 --> G5
     end
 
-    %% ---------- Job 3: Review (ADR-002) ----------
-    subgraph J3["Job 3 · Review · contents: read, pull-requests: write, no actions: read"]
-        TST["Run tests<br/>(sandbox container, no secrets)"]
-        S6["S6 Reviewer agent<br/>gemini-4-hydrogen · skeptical prompt<br/>input: issue snapshot, diff, repo at PR HEAD (untrusted)<br/>no pr.md · bash in container"]
-        G6{{"G6 evidence check on review.json<br/>file:line exists or command was run<br/>approve needs own test run, no new failures"}}
+    subgraph J3["Review job · read-only checkout"]
+        TST["Run tests in sandbox<br/>workspace holds only the PR commit"]
+        S6["S6 Reviewer agent<br/>sees issue snapshot, PR diff, repo at PR head<br/>no spec, design, notes or PR description"]
+        G6{{"G6 evidence check<br/>cited lines exist, cited commands ran<br/>approve needs own test run,<br/>no new test failures and no major or blocker finding"}}
         TST --> S6 --> G6
+        G6 -.->|fail: one re-ask| S6
     end
 
-    %% ---------- Job 4: Route (ADR-003) ----------
-    subgraph J4["Job 4 · Route (script) · actions: write, issues: write · if: always()"]
-        RT{"Job results + verdict + classification<br/>review round < 2 ?"}
+    subgraph J4["Route job · script · always runs"]
+        RT{"Job results, verdict,<br/>classification, review round < 2?"}
     end
 
-    HUMAN(["Human decides merge or close"])
-    STOP(["STOP: Route posts issue comment<br/>linking the explanation artifact (ADR-006)"])
+    HUMAN(["Human merges or closes"])
+    STOP(["Stop: one redacted stop comment<br/>with explanation; re-trigger resumes at S4,<br/>or re-releases for a new review"])
 
-    %% ---------- Tools (ADR-010) ----------
-    TOOLS["All agents: mini-swe-agent · bash only<br/>bash + repo code run in sandbox container (no secrets, runner uid) · no GitHub token<br/>caps: step + wall-clock limit, tokens counted from usage<br/>models: Gemini via AI Studio (free tier, ADR-011)<br/>429: one fallback keeping reviewer + judge splits"]
-    GH["Scripts: gh CLI<br/>event fields via env only<br/>PAT: push + PR · GITHUB_TOKEN: comments, labels, dispatch"]
+    TOOLS["Agent runtime<br/>bash-only agent loop in sandbox container<br/>no secrets, no GitHub token<br/>step, time, token and output caps"]
+    MODELS["Model chains per role<br/>provider fallback, key rotation, waits on rate limits<br/>reviewer chain disjoint from code-writing roles"]
+    GH["GitHub client<br/>PAT: push + PR only<br/>default token: comments, labels, dispatch"]
+    EXP["Experiment workflow<br/>manual, read-only, posts nothing<br/>one pinned model per role"]
 
-    %% ---------- Flow ----------
     T1 & T2 & T3 --> J1
-    STATE <--> J1
+    STATE <-.-> J1
     STATE -.-> J2
-    STATE <-.->|read round, write target stage| J4
+    STATE -.->|issue snapshot + baseline only| J3
+    STATE <-.-> J4
     J1 -.-> MIRROR
+    J4 -.-> MIRROR
     G4 -->|pass| J2
     G5 -->|pass| J3
-    G6 -->|verdict comment + label| J4
+    G6 -->|verdict + label| J4
     RT -->|approved, or 2 rounds used| HUMAN
-    RT -->|changes requested: spec→S1, design→S2,<br/>code→S3, test→S4| T3
-    J4 -.-> MIRROR
+    RT -->|changes requested:<br/>earliest of spec, design, code, test| T3
+    RT -->|check failed, cap reached, crash,<br/>timeout or cancel| STOP
 
-    G1 & G2 & SEC & G5 & G6 -->|fail: explanation artifact| J4
+    G1 & G2 & SEC & S5 & G5 & G6 -->|fail| J4
     G3 & G4 -->|retries used up| J4
-    J1 -->|token / time / tool-call cap reached| J4
-    S1 -->|very vague: rejected.json| J4
-    RT -->|check failed, retries used up, cap reached,<br/>or job crashed, timed out or cancelled| STOP
+    S1 -->|very vague| J4
+    J1 -->|cap reached| J4
 
     TOOLS -.-> S1 & S23 & S4 & S6
-    GH -.-> J2 & J4
+    MODELS -.-> TOOLS & G1
+    GH -.-> J1 & J2 & J3 & J4
+    EXP -.-> S1 & S6

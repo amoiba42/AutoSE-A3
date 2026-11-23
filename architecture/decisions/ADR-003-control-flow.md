@@ -1,4 +1,4 @@
-# 3. Orchestrator-driven control flow across four jobs
+# 3. Orchestrator control flow
 
 Covers: D2
 
@@ -6,7 +6,7 @@ Date: 2026-11-22
 
 ## Status
 
-Proposed
+Accepted. Amended by ADR-021 (Release merges the base branch), ADR-022 (where a re-run resumes) and ADR-024 (restart from a chosen stage).
 
 ## Context
 

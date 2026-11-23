@@ -1,4 +1,4 @@
-# 12. Full-artifact hand-offs with a two-phase tester
+# 12. Full-artifact hand-offs
 
 Covers: D3
 
@@ -6,7 +6,7 @@ Date: 2026-11-22
 
 ## Status
 
-Proposed
+Accepted. Amended by ADR-017 (tester edits to existing tests are discarded), ADR-018 (the tester's isolation is enforced in the sandbox) and ADR-024 (stored tester tests are dropped on a restart).
 
 ## Context
 
@@ -36,8 +36,8 @@ Agents will read `ARCHITECTURE.md` and never change it in PR branches.
 
 ## Consequences
 
-**Positive.** The tester gets only the interface list, not the design's reasoning, which is good practice. It requires the design to list its targets in a format a script can parse.
+**Positive.** The tester gets only the interface list, not the design's reasoning. It requires the design to list its targets in a format a script can parse.
 
-**Negative.** Full artifacts make prompts longer and use more tokens, as expected for any agentic workflow. If a phase 1 assertion misreads an acceptance criterion, nothing in the run can fix it: Stage 3 retries run out and the run stops. We accept this to keep the tester independent of the implementation.
+**Negative.** Full artifacts make prompts longer and use more tokens, as expected for any agentic workflow. If a phase 1 assertion misreads an acceptance criterion, nothing in the run can fix it: the Stage 3 retries and the one return to Stage 2 run out, and the run stops. We accept this to keep the tester independent of the implementation.
 
 **Neutral.** Phase 1 tests may not import correctly until phase 2. Both phases run in the same agent, so this does not matter.

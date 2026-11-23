@@ -1,4 +1,4 @@
-# 6. Least privilege, capped work and explained stops
+# 6. Least privilege and caps
 
 Covers: D9
 
@@ -6,7 +6,7 @@ Date: 2026-11-22
 
 ## Status
 
-Proposed
+Accepted. Amended by ADR-014 (waits on 429 and 503), ADR-015 (redacted, edited-in-place comments), ADR-017 (re-asks instead of an immediate stop), ADR-018 (every unexpected exception becomes an explained stop) and ADR-023 (output cap and larger agent caps).
 
 ## Context
 

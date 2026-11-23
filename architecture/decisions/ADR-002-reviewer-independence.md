@@ -1,4 +1,4 @@
-# 2. Reviewer isolation from the implementer
+# 2. Reviewer isolation
 
 Covers: D8
 
@@ -6,7 +6,7 @@ Date: 2026-11-22
 
 ## Status
 
-Proposed
+Accepted. Amended by ADR-018 (diff against the merge base) and ADR-025 (only the PR commit in the workspace).
 
 ## Context
 
@@ -26,7 +26,7 @@ We will not give the reviewer `pr.md`. As a backstop, we will keep `pr.md` minim
 
 We will use a different model for the reviewer from the agents that write code.
 
-We will have the reviewer job run the tests itself, in the sandbox container with no secrets.
+We will have the reviewer job run the tests itself, in a container with no secrets.
 
 We will treat the diff and the repository as untrusted input in the reviewer's prompt, because the code under review can contain text aimed at the reviewer.
 

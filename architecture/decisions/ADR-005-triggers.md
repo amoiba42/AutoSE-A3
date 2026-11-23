@@ -1,4 +1,4 @@
-# 5. Label and comment triggers with one run per issue
+# 5. Label and comment triggers
 
 Covers: D10
 
@@ -6,7 +6,7 @@ Date: 2026-11-22
 
 ## Status
 
-Proposed
+Accepted. Amended by ADR-014 (issues are started one at a time) and ADR-024 (a `restart_from` input on manual dispatch).
 
 ## Context
 

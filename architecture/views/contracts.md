@@ -1,6 +1,6 @@
 # Agent contracts
 
-What each agent receives, what it must produce, and who uses each output. Derived from ADR-001 to ADR-012. Rule of thumb: an agent gets what the next check or the next stage needs, and nothing that carries another agent's reasoning unless an ADR allows it.
+What each agent receives, what it must produce, and who uses each output. Derived from the accepted ADRs (ADR-001 to ADR-027). Rule of thumb: an agent gets what the next check or the next stage needs, and nothing that carries another agent's reasoning unless an ADR allows it.
 
 ## 1. Shared rules for every agent
 
@@ -8,8 +8,9 @@ What each agent receives, what it must produce, and who uses each output. Derive
 - **Tool:** bash only, through mini-swe-agent (ADR-010). Every command runs in the sandbox container, which holds no secrets and cannot see the runner's processes.
 - **No GitHub token:** jobs that run agents check out with `persist-credentials: false`, so no token is left in `.git/config`. All GitHub actions are done by scripts (ADR-003, ADR-010).
 - **Attempt summary:** every agent ends with `attempt_summary.md`: what it did and why, at most about 200 words. It is used only in a send-back note for the same stage (ADR-004).
-- **Schema errors:** an output that fails its schema gets one re-ask to the same agent, counted against its caps (ADR-006).
-- **Caps:** step limit and wall-clock limit in mini-swe-agent; token cap enforced by the orchestrator from each response's `usage` (ADR-006, ADR-010).
+- **Re-asks:** an output that fails its schema, G1, G2 or G6 gets one re-ask to the same agent, counted against its caps (ADR-006, ADR-017).
+- **Caps:** step limit and wall-clock limit in mini-swe-agent; token caps (3M per stage, 15M per run) enforced from each response's `usage`; command output kept to 10,000 characters (ADR-006, ADR-010, ADR-023).
+- **Models:** each role has its own fallback chain; the judge never uses the requirements model, and the reviewer chain shares no model with the code-writing roles (ADR-020).
 
 ## 2. Contracts per agent
 
@@ -17,7 +18,7 @@ What each agent receives, what it must produce, and who uses each output. Derive
 
 | | |
 |---|---|
-| Receives | issue title + body; A1 skill as the system prompt; the repository at the clean commit (read only). On a send-back: the send-back note. |
+| Receives | issue title + body; adapted A1 skill as the system prompt; the repository at the clean commit (read only). On a send-back: the send-back note. |
 | Must output | `spec.json` (schema below) and `attempt_summary.md`; or, only for a very vague issue, `rejected.json` (`{"reason", "questions"}`) instead of `spec.json`, which stops the run |
 | Never receives | design, code, tests, review, other agents' summaries |
 
@@ -63,17 +64,19 @@ G1 passes only if the schema is valid and every AC is `testable: true`. `judge.j
 }
 ```
 
-Used by: G2 (`targets[].file`, `symbol`, `status`), the G3 scope guard (`targets[].file` is the allow list), the interface list for the tester (`file`, `symbol`, `kind`, `signature`, `status` only; `approach` is dropped).
+`kind` is one of `function`, `class`, `method`, `attribute`, `module`; a non-Python file must use `module` (ADR-018).
+
+Used by: G2 (`targets[].file`, `symbol`, `kind`, `status`), the G3 scope guard (`targets[].file` is the allow list), the interface list for the tester (`file`, `symbol`, `kind`, `signature`, `status` only; `approach` is dropped).
 
 ### Testing agent (Stage 4, two phases)
 
 | | Phase 1 | Phase 2 |
 |---|---|---|
 | Receives | issue title + body; `acceptance_criteria` from `spec.json`; the interface list; a scratch copy of the clean commit | its phase 1 tests; a scratch copy with the implementation |
-| May change | new test files under `tests/` | imports, fixtures and paths in its own phase 1 files; never an `assert` line; no new files |
-| Never receives | `approach` from `design.json`, the implementer's code (phase 1), trajectory, attempt summary | the implementer's trajectory and attempt summary |
+| May change | new test files under `tests/`; never an existing test file | imports, fixtures and paths in its own phase 1 files; never an `assert` line; no new files |
+| Never receives | `approach` from `design.json`, the implementer's code (phase 1, workspace unreadable), trajectory, attempt summary | the implementer's trajectory and attempt summary |
 
-Must output: test files whose test functions are named `test_ac<n>_<what>` (one or more per AC), each calling at least one interface symbol and containing a non-trivial `assert`, and `attempt_summary.md`. Only test files under `tests/` are kept, never `conftest.py`; anything else is discarded and logged (ADR-010). The tests are stored as an artifact and applied only for G4, so a Stage 3 retry never sees them (ADR-012). `test_report.md` is written by a script from the `pytest` JUnit XML and `baseline.json`, not by the agent.
+Must output: test files whose test functions are named `test_ac<n>_<what>` (one or more per AC), each calling at least one interface symbol and containing a non-trivial `assert` or `pytest.raises`, and `attempt_summary.md`. Only test files under `tests/` are kept, never `conftest.py`; anything else is discarded and logged (ADR-010). The tests are stored as an artifact and applied only for G4, so a Stage 3 retry never sees them (ADR-012). `test_report.md` is written by a script from the `pytest` JUnit XML and `baseline.json`, not by the agent.
 
 Used by: G4 (test names map to AC ids; assertions compared across phases), Release (tests are part of the diff), `results.csv`.
 
@@ -81,7 +84,7 @@ Used by: G4 (test names map to AC ids; assertions compared across phases), Relea
 
 | | |
 |---|---|
-| Receives | issue title + body; `git diff` of the PR; the repository at the PR's latest commit (inside a container); the JUnit result of the test step run in the same job with no secrets. The diff and repository are marked as untrusted input. |
+| Receives | issue title + body; `git diff` of the PR against its merge base with the base branch; the repository at the PR's latest commit, with no other refs (inside a container; ADR-025); the JUnit result of the test step run in the same job with no secrets. The diff and repository are marked as untrusted input. |
 | Never receives | `spec.*`, `design.*`, `test_report.md`, `pr.md`, attempt summaries, send-back notes, trajectories, `state.json`, the issue comment thread, the round number |
 | Must output | `review.json` (schema below); `review.md` is rendered from it and posted as a PR comment by a script, with the label |
 
@@ -100,17 +103,17 @@ Used by: G4 (test names map to AC ids; assertions compared across phases), Relea
 - `verdict` is `approve` or `changes_requested`. `classification` is one of `spec`, `design`, `code`, `test`.
 - `drift_reference` may point only at the issue, a `file:line`, or a section of `ARCHITECTURE.md` (ADR-004).
 
-Used by: G6 (every `file:line` must exist at PR HEAD; every `command` must appear in the reviewer's own run log; an `approve` must include the reviewer's test command and is invalid if the job's test step failed beyond `baseline.json`), Route (`verdict`, `classification`), the send-back note (`findings` copied verbatim).
+Used by: G6 (every `file:line` must exist at PR HEAD; every `command` must appear in the reviewer's own run log; an `approve` must include the reviewer's test command and is invalid if the job's test step failed beyond `baseline.json` or any finding is `major` or `blocker`), Route (`verdict`, `classification`), the send-back note (`findings` copied verbatim).
 
 ## 3. Script outputs
 
 | Output | Written by | Contents | Read by |
 |---|---|---|---|
-| `state.json` | Orchestrator, Route | issue snapshot (title, body, `updated_at`), branch, current stage, last passed stage, target stage, review round, retry counters, run IDs, `done` flag, model ID per role, tokens per stage | Orchestrator, Release, Route; mirrored on the issue |
+| `state.json` | Orchestrator, Route | issue snapshot (title, body, `updated_at`), branch, current stage, last passed stage, target stage, stopped job, review round, retry counters, run IDs, `done` flag, model ID per role, tokens per stage | Orchestrator, Release, Route; mirrored on the issue |
 | send-back note | Orchestrator | attempt summary of the stage being redone + failed check output or `review.json` findings | the agent of the stage being redone |
 | `pr.md` | Release | issue link, branch name, changed files, Actions run link | humans |
 | commit message | Release | fixed template: `autose: issue #<n>, round <r>`; never force-pushed | humans (visible to the reviewer, so it carries no reasoning) |
-| explanation artifact | the job that stopped, or Route on a crash | stage, check, exit code, output tail, caps reached | humans, issue comment |
+| explanation artifact | the job that stopped (any unexpected exception becomes a stop), or Route on a crash | stage, check, exit code, output tail, caps reached | humans, issue comment |
 
 **Route rule when findings have different classifications:** Route sends the work to the **earliest** stage named (spec before design before code before test), because the later stages run again anyway.
 
@@ -137,6 +140,7 @@ Used by: G6 (every `file:line` must exist at PR HEAD; every `command` must appea
 
 - Event fields (issue title, body, comment) reach scripts only through `env:` variables, never `${{ }}` inside `run:` (ADR-006).
 - Every step that runs repository code (install, tests, baseline, the reviewer's test step) has no secrets in its environment (ADR-006).
+- Issue comments and explanation artifacts are redacted, including encoded secrets, and comments are edited in place: one stop, one assumptions and one done comment per issue (ADR-015, ADR-027).
 - The PAT is fine-grained: contents and pull requests on the fork only, no workflow permission. It is used only to push and open the PR; all comments and labels use `GITHUB_TOKEN`, so they cannot trigger runs (ADR-003).
 
 ## 6. Known residual leaks
