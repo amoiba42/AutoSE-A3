@@ -1,3 +1,4 @@
+%%{init: {"theme": "dark", "themeVariables": {"background": "#0d1117", "fontFamily": "Helvetica, Arial, sans-serif", "fontSize": "15px", "lineColor": "#c9d1d9", "edgeLabelBackground": "#21262d", "clusterBkg": "#161b22", "clusterBorder": "#58a6ff", "titleColor": "#e6edf3", "textColor": "#e6edf3"}}}%%
 %% Component view: agents, checks, jobs and how they connect.
 %% Solid arrow = control or data flow. Dashed arrow = uses / reads / writes.
 flowchart TB
@@ -79,3 +80,27 @@ flowchart TB
     MODELS -.-> TOOLS & G1
     GH -.-> J1 & J2 & J3 & J4
     EXP -.-> S1 & S6
+
+    %% ---------- Styling ----------
+    classDef agent fill:#0b3d5c,stroke:#38bdf8,stroke-width:2px,color:#e0f2fe
+    classDef gate fill:#4a3000,stroke:#fbbf24,stroke-width:2px,color:#fef3c7
+    classDef script fill:#0f3d2e,stroke:#34d399,stroke-width:2px,color:#d1fae5
+    classDef store fill:#2e1a47,stroke:#c084fc,stroke-width:2px,color:#f3e8ff
+    classDef infra fill:#1f2937,stroke:#94a3b8,stroke-width:1.5px,color:#e5e7eb
+    classDef trigger fill:#3b1d4a,stroke:#f472b6,stroke-width:2px,color:#fce7f3
+    classDef human fill:#14532d,stroke:#4ade80,stroke-width:2.5px,color:#dcfce7
+    classDef stop fill:#4c0519,stroke:#fb7185,stroke-width:2.5px,color:#ffe4e6
+    class S1,S23,S4,S6 agent
+    class G1,G2,G3,G4,G5,G6,SEC gate
+    class S5,TST,RT script
+    class STATE,MIRROR store
+    class TOOLS,MODELS,GH,EXP infra
+    class T1,T2,T3 trigger
+    class HUMAN human
+    class STOP stop
+    style TRIG fill:#161b22,stroke:#f472b6,stroke-width:1.5px,color:#e6edf3
+    style J1 fill:#161b22,stroke:#38bdf8,stroke-width:1.5px,color:#e6edf3
+    style J2 fill:#161b22,stroke:#34d399,stroke-width:1.5px,color:#e6edf3
+    style J3 fill:#161b22,stroke:#fbbf24,stroke-width:1.5px,color:#e6edf3
+    style J4 fill:#161b22,stroke:#34d399,stroke-width:1.5px,color:#e6edf3
+    linkStyle default stroke:#c9d1d9,stroke-width:1.6px
